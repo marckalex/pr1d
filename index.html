@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Code Simplifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.min.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0-beta3/css/all.min.css">
+
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 class="title" style="text-align: center;">Code insert video tiktok Simplifier</h1>
+
+        <div class="controls">
+            <h2>Customize Your Theme</h2>
+            <label for="backgroundColor">Background Color:</label>
+            <input type="color" id="backgroundColor" onchange="changeBackgroundColor(event)">
+
+            <label for="textColor">Text Color:</label>
+            <input type="color" id="textColor" onchange="changeTextColor(event)">
+
+            <label for="fontFamily">Font Family:</label>
+            <select id="fontFamily" onchange="changeFontFamily(event)">
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <!-- Agrega más opciones de fuente según sea necesario -->
+            </select>
+
+            <label for="borderColor">Border Color:</label>
+            <input type="color" id="borderColor" onchange="changeBorderColor(event)">
+        </div>
+        <!--         <button id="modeToggle" onclick="toggleMode()">Toggle Mode</button>
+ --> <button id="modeToggle" onclick="toggleMode()">
+            <i class="bi bi-sun"></i>Mode
+        </button>
+
+        <div class="simplifier">
+            <h1 class="title">TikTok Code Simplifier</h1>
+            <textarea id="inputCode" placeholder="Paste TikTok code here" rows="10" cols="80"
+                oninput="simplifyCode()"></textarea>
+            <h2>Simplified Code</h2>
+            <textarea id="outputCode" rows="10" cols="80" readonly></textarea>
+
+            <div id="customAlert" class="custom-alert">
+                Code copied to clipboard!
+            </div>
+            <button onclick="clearCode()">Clear</button>
+        </div>
+
+        <div class="json">
+            <div id="jsonDisplay">
+                <h2>Generated JSON</h2>
+                <pre id="jsonOutput"></pre>
+            </div>
+
+            <button onclick="downloadJson()">Download JSON</button>
+            <button onclick="copyJSON()">Copy JSON</button>
+        </div>
+
+        <div class="history" id="history">
+            <h2>History</h2>
+            <ul id="historyList"></ul>
+        </div>
+    </div>
+
+    <script>
+        let isDarkMode = localStorage.getItem('darkMode') === 'enabled';
+
+        function toggleMode() {
+            isDarkMode = !isDarkMode;
+            applyMode();
+        }
+
+        function applyMode() {
+            const container = document.querySelector('.container');
+            container.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+        }
+
+        // Aplicar el modo al cargar la página
+        applyMode();
+        function changeBackgroundColor(event) {
+            document.body.style.backgroundColor = event.target.value;
+        }
+
+        function changeTextColor(event) {
+            document.body.style.color = event.target.value;
+        }
+
+        function changeFontFamily(event) {
+            document.body.style.fontFamily = event.target.value;
+        }
+
+        function changeBorderColor(event) {
+            const textAreas = document.querySelectorAll('textarea');
+            textAreas.forEach(textArea => {
+                textArea.style.borderColor = event.target.value;
+            });
+        }
+
+
+        let historyList = [];
+        function clearCode() {
+            document.getElementById('inputCode').value = '';
+            document.getElementById('outputCode').value = '';
+        }
+
+        // Resto del código...
+
+        // Resto del código...
+
+        function simplifyCode() {
+            const inputCode = document.getElementById('inputCode').value.trim();
+            const outputCode = document.getElementById('outputCode');
+
+            // Validación de longitud mínima
+            if (inputCode.length === 0) {
+                showAlert('Por favor, ingresa un código de TikTok.');
+                return;
+            }
+
+            // Validación de formato (solo un ejemplo básico)
+            const expectedKeywords = ['@', '#', 'music'];
+            const containsExpectedKeywords = expectedKeywords.some(keyword => inputCode.includes(keyword));
+
+            if (!containsExpectedKeywords) {
+                showAlert('El código ingresado no parece ser un código de TikTok válido.');
+                return;
+            }
+
+            // Use regular expressions to simplify the TikTok code
+            const simplifiedCode = inputCode.replace(/<section>.*<\/section>/g, '<section> </section>');
+            outputCode.value = simplifiedCode;
+
+            // Generar el JSON para este proceso
+            const tiktokVideos = parseTikTokCode(inputCode); // Supongo que tienes una función para esto
+
+            // Mostrar el JSON generado
+            const jsonOutput = document.getElementById('jsonOutput');
+
+            // Obtener el JSON actual, o inicializarlo si no existe
+            let currentJson = {
+                tiktokVideos: []
+            };
+
+            try {
+                currentJson = JSON.parse(jsonOutput.innerText);
+                currentJson.tiktokVideos = currentJson.tiktokVideos.concat(tiktokVideos);
+            } catch (error) {
+                showAlert('Error al parsear el JSON existente. Creando uno nuevo.');
+                currentJson.tiktokVideos = tiktokVideos;
+            }
+
+
+            // Agregar la entrada al historial
+            const historyEntry = {
+                original: inputCode,
+                simplified: simplifiedCode
+            };
+
+            historyList.push(historyEntry);
+            updateHistory();  // Actualizar el historial en la interfaz de usuario
+
+
+            jsonOutput.innerText = JSON.stringify(currentJson, null, 2);
+
+            // Copy the simplified code to the clipboard
+            outputCode.select();
+            document.execCommand('copy');
+
+            // Show custom alert
+            const customAlert = document.getElementById('customAlert');
+            customAlert.style.display = 'block';
+
+            // Hide the alert after 2 seconds
+            setTimeout(() => {
+                customAlert.style.display = 'none';
+            }, 3000);
+
+            showAlert('Código de TikTok simplificado y copiado al portapapeles.');
+        }
+        function downloadJson() {
+            // Filtra las entradas de la historia para eliminar las vacías
+            const filteredHistory = historyList.filter(entry => entry.simplified.trim() !== '');
+
+            if (filteredHistory.length === 0) {
+                showAlert('No hay datos para generar el JSON.');
+                return;
+            }
+
+            const tiktokVideos = filteredHistory.map(entry => ({
+                cite: entry.simplified,
+                id: entry.simplified
+            }));
+
+            const jsonData = {
+                tiktokVideos: tiktokVideos
+            };
+
+            const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], {
+                type: 'application/json'
+            });
+
+            const url = URL.createObjectURL(jsonBlob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tiktok_videos.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyJSON() {
+            const outputCode = document.getElementById('jsonOutput');
+            const jsonData = JSON.parse(outputCode.innerText);
+
+            const jsonString = JSON.stringify(jsonData, null, 2);
+
+            navigator.clipboard.writeText(jsonString)
+                .then(() => alert('JSON copiado al portapapeles'))
+                .catch(() => alert('Error al copiar JSON al portapapeles'));
+        }
+
+
+
+
+        // Resto de tu código aquí...
+
+        function parseTikTokCode(code) {
+            // Aquí deberías implementar la lógica para extraer las URLs e IDs de tu código TikTok
+            // y devolver un array de objetos en el formato que necesitas para el JSON.
+            // Por ejemplo, podrías buscar las URLs y IDs usando expresiones regulares.
+
+            // Este es solo un ejemplo básico:
+            const urls = code.match(/https:\/\/www\.tiktok\.com\/@[^\/]+\/video\/\d+/g) || [];
+            const tiktokVideos = urls.map(url => {
+                const parts = url.split('/');
+                const id = parts[parts.length - 1];
+                return {
+                    cite: url,
+                    id: id
+                };
+            });
+
+            return tiktokVideos;
+        }
+
+        // Resto de tu código aquí...
+
+        function showAlert(message) {
+            const customAlert = document.getElementById('customAlert');
+            customAlert.innerText = message;
+            customAlert.style.display = 'block';
+
+            // Ocultar la alerta después de 2 segundos
+            setTimeout(() => {
+                customAlert.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateHistory() {
+            const historyListElement = document.getElementById('historyList');
+            historyListElement.innerHTML = '';
+
+            // Revertir el orden del historial para mostrar el más reciente primero
+            const reversedHistory = historyList.slice().reverse();
+
+            for (let i = 0; i < reversedHistory.length; i++) {
+                const listItem = document.createElement('li');
+
+                const originalCode = document.createElement('code');
+                originalCode.innerText = 'Code origin:\n' + reversedHistory[i].original;
+                originalCode.classList.add('language-markup');
+
+                const simplifiedCode = document.createElement('code');
+                simplifiedCode.innerText = reversedHistory[i].simplified;
+                simplifiedCode.classList.add('language-markup');
+
+                const copyButton = document.createElement('button');
+                copyButton.innerText = 'Copy Code';
+                copyButton.addEventListener('click', () => copyCode(i, reversedHistory[i].simplified));
+
+                listItem.appendChild(originalCode);
+                listItem.appendChild(simplifiedCode);
+                if (reversedHistory[i].simplified.trim() !== '') {
+                    listItem.appendChild(copyButton);
+                }
+                historyListElement.appendChild(listItem);
+            }
+            /*  window.onload = function () {
+                 Prism.highlightAll();  // Aplicar Prism a todos los bloques de código
+             }; */
+            Prism.highlightAll();  // Aplicar Prism a todos los bloques de código
+            saveToLocalStorage();  // Guardar historial en localStorage
+
+        }
+
+
+
+        function copyCode(index) {
+            const codeToCopy = historyList[index].simplified;
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                const customAlert = document.getElementById('customAlert');
+                customAlert.innerText = 'Code copied to clipboard!';
+                customAlert.style.display = 'block';
+
+                // Hide the alert after 2 seconds
+                setTimeout(() => {
+                    customAlert.style.display = 'none';
+                }, 3000);
+            });
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('historyList', JSON.stringify(historyList));
+        }
+
+        function loadFromLocalStorage() {
+            const savedHistory = localStorage.getItem('historyList');
+            if (savedHistory) {
+                historyList = JSON.parse(savedHistory);  // Cambiamos const a let para permitir reasignación
+                updateHistory();
+            }
+        }
+
+        // Llama a esta función al final para cargar el historial almacenado
+        loadFromLocalStorage();
+
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-markup.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+
+</body>
+
+</html>
